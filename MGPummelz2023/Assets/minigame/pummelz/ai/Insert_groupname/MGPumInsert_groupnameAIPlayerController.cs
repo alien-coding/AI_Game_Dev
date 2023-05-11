@@ -16,7 +16,7 @@ namespace mg.pummelz.Insert_groupname
         
         protected override int[] getTeamMartikels()
         {
-            return new int[] { 1269263, 22222222 };
+            return new int[] { 1269263, 5727525 };
         }
 
         
