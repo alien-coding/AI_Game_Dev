@@ -22,19 +22,16 @@ namespace mg.pummelz.Insert_groupname
 
         internal override MGPumCommand calculateCommand()
         {
-            //moving
             foreach (MGPumUnit unit in state.getAllUnitsInZone(MGPumZoneType.Battlegrounds))
             {
                 if (stateOracle.canMove(unit) && unit.currentSpeed >= 1 && unit.ownerID == this.playerID)
                 {
 
                     Vector2Int position = unit.field.coords;
-                    Debug.Log(state.getField(position));
-
                     Vector2Int direction = position + Vector2Int.up;
-                    Debug.Log(state.getField(position));
+                    MGPumField destination = state.getField(direction);
 
-                    if (state.getField(direction).isEmpty())
+                    if (destination != null && destination.isEmpty())
                     {
                         MGPumMoveChainMatcher chainMatcher = unit.getMoveMatcher();
                         MGPumFieldChain chain = new(this.playerID, chainMatcher);
@@ -51,14 +48,12 @@ namespace mg.pummelz.Insert_groupname
                 if(unit.ownerID == this.playerID && stateOracle.canAttack(unit) && unit.currentRange >= 1)
                 {
                     Vector2Int position = unit.field.coords;
-                    Debug.Log(state.getField(position));
-
                     Vector2Int direction = position + Vector2Int.up;
-                    Debug.Log(state.getField(position));
-
                     MGPumField attackHere = state.getField(direction);
-                    if (!attackHere.isEmpty() && state.getUnitForField(attackHere).ownerID != this.playerID) 
+
+                    if (attackHere != null && !attackHere.isEmpty() && state.getUnitForField(attackHere).ownerID != this.playerID) 
                     {
+                        Debug.Log("trying to attack" + attackHere);
                         MGPumAttackChainMatcher attackMatcher = unit.getAttackMatcher();
                         MGPumFieldChain chain = new(this.playerID, attackMatcher);
                         chain.add(state.getField(position));
@@ -66,10 +61,15 @@ namespace mg.pummelz.Insert_groupname
                         {
                             chain.add(state.getField(attackHere));
                         }
-                        
-                        MGPumAttackCommand attack = new(this.playerID, chain, unit);
-
-                        return attack;
+                        if (chain.isValidChain())
+                        {
+                            MGPumAttackCommand attack = new(this.playerID, chain, unit);
+                            return attack;
+                        }
+                        else
+                        {
+                            Debug.Log("hilfeeeee");
+                        }
                     }
                 }
             }
