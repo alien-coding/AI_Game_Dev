@@ -106,7 +106,7 @@ namespace mg.pummelz.Insert_groupname
             {
                 Vector2Int position = unit.field.coords;
 
-                foreach (Vector2Int vector in this.getDirectionsWithDepth(unit.currentRange))   //get all reachable fields unit can shoot
+                foreach (Vector2Int vector in getDirectionsWithDepth(unit.currentRange))   //get all reachable fields unit can shoot
                 {
                     Vector2Int vectorToTarget = position + vector;
                     MGPumField targetField = state.getField(vectorToTarget);
@@ -114,7 +114,7 @@ namespace mg.pummelz.Insert_groupname
                     if (targetField != null && !targetField.isEmpty() && state.getUnitForField(targetField).ownerID != this.playerID)   //found field contains enemy?
                     {
                         MGPumAttackChainMatcher attackMatcher = unit.getAttackMatcher();
-                        MGPumFieldChain chain = new(this.playerID, attackMatcher);
+                        MGPumFieldChain chain = new(playerID, attackMatcher);
                         chain.add(state.getField(position));    //add starting point
 
                         List<Vector2Int> splittedSteps = splitVectorInSteps(position, vectorToTarget);  //split vector to target in single steps for chain
@@ -203,6 +203,53 @@ namespace mg.pummelz.Insert_groupname
                 directions.Add(position);
             }
             return directions;
+        }
+
+        private List<List<Vector2Int>> getAllPaths(Vector2Int position, Vector2Int destination, int maxSteps)
+        {
+
+            List<Vector2Int> stepsToGoal = recursion(position, destination, maxSteps);
+        }
+
+        private List<Vector2Int> recursion(Vector2Int position, Vector2Int destination, int maxSteps)
+        {
+            List<List<Vector2Int>> stepsToGoal = null;
+            if (maxSteps > 0 && position != destination)
+            {
+                List<Vector2Int> moves = getAllOneStepPositions(position);
+                foreach (Vector2Int move in moves)
+                {
+                    List <Vector2Int> temp = recursion(move, destination, maxSteps - 1);
+                    if (temp != null)
+                    {
+                        stepsToGoal.AddRange(temp);
+                    }0000
+                }
+                return stepsToGoal;
+            }
+            else if (position == destination)
+            {
+                stepsToGoal.Add(position);
+                return stepsToGoal;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        private List<Vector2Int> getAllOneStepPositions(Vector2Int position)
+        {
+            List<Vector2Int> steps = new List<Vector2Int>();
+            steps.Add(position + Vector2Int.left);
+            steps.Add(position + Vector2Int.right);
+            steps.Add(position + Vector2Int.up);
+            steps.Add(position + Vector2Int.down);
+            steps.Add(position + Vector2Int.left + Vector2Int.up);
+            steps.Add(position + Vector2Int.left + Vector2Int.down);
+            steps.Add(position + Vector2Int.right + Vector2Int.up);
+            steps.Add(position + Vector2Int.right + Vector2Int.down);
+            return steps;
         }
     }
 }
