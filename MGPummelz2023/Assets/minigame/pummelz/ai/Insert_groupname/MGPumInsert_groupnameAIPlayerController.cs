@@ -61,42 +61,37 @@ namespace mg.pummelz.Insert_groupname
             {
                 Vector2Int position = unit.field.coords;
 
-                List<Vector2Int> allVectors = getDirectionsWithDepth(unit.currentSpeed);
-                foreach (Vector2Int vectorToDestination in allVectors)
+                List<Vector2Int> allVectors = getDirectionsWithDepth(unit.currentSpeed);    //get all reachable fields unit can move to
+                foreach (Vector2Int vector in allVectors)
                 {
-                    Vector2Int movingWay = position + vectorToDestination;
-                    MGPumField destination = state.getField(movingWay);
+                    Vector2Int vectorToDestination = position + vector;
+                    MGPumField destination = state.getField(vectorToDestination);
 
-                    if (destination != null && destination.isEmpty())
+                    if (destination != null && destination.isEmpty())   //found field is free?
                     {
                         MGPumMoveChainMatcher chainMatcher = unit.getMoveMatcher();
                         MGPumFieldChain chain = new(playerID, chainMatcher);
                         chain.add(state.getField(position));
                        
-                        List<Vector2Int> splittedSteps = splitVectorInSteps(position, movingWay);
+                        List<Vector2Int> splittedSteps = splitVectorInSteps(position, vectorToDestination); //split vector to destination in single steps for chain
                         foreach (Vector2Int stepVector in splittedSteps)
                         {
                             //Debug.Log(stepVector + " " + unit.currentSpeed);
-                            MGPumField fieldOfVector = state.getField(stepVector);
+                            MGPumField fieldOfVector = state.getField(stepVector);  //add the steps as fields to chain
                             if (chain.canAdd(fieldOfVector))
                             {
                                 chain.add(fieldOfVector);
                             }
                             else
                             {
-                                break;
+                                break;  //if one can't be added, the whole move is not possible, abort here (later checks for last one which is not set)
                             }
                         }
-                        if (chain.isValidChain() && chain.getLast() == destination)
+                        if (chain.isValidChain() && chain.getLast() == destination)     //only if chain is valid and every step could be added (aborts if one can't be added)
                         {
                             MGPumMoveCommand move = new(this.playerID, chain, unit);
                             allMoves.Add(move);
-                        }
-                        else
-                        {
-                            Debug.Log("Found unvalid move");
-                        }
-                        
+                        }                        
                     }
                 }
             }
@@ -111,40 +106,36 @@ namespace mg.pummelz.Insert_groupname
             {
                 Vector2Int position = unit.field.coords;
 
-                foreach (Vector2Int vectorToDestination in this.getDirectionsWithDepth(unit.currentRange))
+                foreach (Vector2Int vector in this.getDirectionsWithDepth(unit.currentRange))   //get all reachable fields unit can shoot
                 {
-                    Vector2Int attackingWay = position + vectorToDestination;
-                    MGPumField attackHere = state.getField(attackingWay);
+                    Vector2Int vectorToTarget = position + vector;
+                    MGPumField targetField = state.getField(vectorToTarget);
 
-                    if (attackHere != null && !attackHere.isEmpty() && state.getUnitForField(attackHere).ownerID != this.playerID)
+                    if (targetField != null && !targetField.isEmpty() && state.getUnitForField(targetField).ownerID != this.playerID)   //found field contains enemy?
                     {
                         MGPumAttackChainMatcher attackMatcher = unit.getAttackMatcher();
                         MGPumFieldChain chain = new(this.playerID, attackMatcher);
-                        chain.add(state.getField(position));
+                        chain.add(state.getField(position));    //add starting point
 
-                        List<Vector2Int> splittedSteps = splitVectorInSteps(position, attackingWay);
+                        List<Vector2Int> splittedSteps = splitVectorInSteps(position, vectorToTarget);  //split vector to target in single steps for chain
                         foreach (Vector2Int stepVector in splittedSteps)
                         {
-                            MGPumField fieldOfVector = state.getField(stepVector);
+                            MGPumField fieldOfVector = state.getField(stepVector);  //add the steps as fields to chain
                             if (chain.canAdd(fieldOfVector))
                             {
                                 chain.add(fieldOfVector);
                             }
                             else
                             {
-                                break;
+                                break;  //if one can't be added, the whole move is not possible, abort here (later checks for last one which is not set)
                             }
                         }
 
                         
-                        if (chain.isValidChain() && chain.getLast() == attackHere)
+                        if (chain.isValidChain() && chain.getLast() == targetField)     //only if chain is valid and every step could be added (aborts if one can't be added)
                         {
                             MGPumAttackCommand attack = new(this.playerID, chain, unit);
                             allAttacks.Add(attack);
-                        }
-                        else
-                        {
-                            Debug.Log("Found unvalid attack");
                         }
                     }
                 }
@@ -168,6 +159,10 @@ namespace mg.pummelz.Insert_groupname
             return directions;
         }
 
+        //splits vector into single vector steps for chain adding
+        //therefore starts at given position and only takes single steps toward destination
+        //every new position is added to directions, therefore directions contains the absolute vectors (which are needed for chain) in the right order,
+        //beginning at the first step after position and last step beeing the destination
         private List<Vector2Int> splitVectorInSteps(Vector2Int position, Vector2Int destination)
         {
             List<Vector2Int> directions = new List<Vector2Int>();
