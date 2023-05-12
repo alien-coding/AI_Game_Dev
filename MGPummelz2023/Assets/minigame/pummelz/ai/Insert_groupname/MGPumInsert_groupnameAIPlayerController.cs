@@ -24,56 +24,92 @@ namespace mg.pummelz.Insert_groupname
         {
             foreach (MGPumUnit unit in state.getAllUnitsInZone(MGPumZoneType.Battlegrounds))
             {
-                if (stateOracle.canMove(unit) && unit.currentSpeed >= 1 && unit.ownerID == this.playerID)
+                if(unit.ownerID == this.playerID)
                 {
+                    List<MGPumMoveCommand> allMoves = this.getAllMovesForUnit(unit);
+                    List<MGPumAttackCommand> allAttacks = this.getAllAttacksForUnit(unit);
+                    int attackOrMove = this.rng.Next(2); // number is < smaller than maxValue
 
-                    Vector2Int position = unit.field.coords;
-                    Vector2Int direction = position + Vector2Int.up;
-                    MGPumField destination = state.getField(direction);
-
-                    if (destination != null && destination.isEmpty())
+                    if (attackOrMove == 0 && allMoves.Count > 0)
                     {
-                        MGPumMoveChainMatcher chainMatcher = unit.getMoveMatcher();
-                        MGPumFieldChain chain = new(this.playerID, chainMatcher);
-                        chain.add(state.getField(position));
-                        if (chain.canAdd(state.getField(direction)))
-                        {
-                            chain.add(state.getField(direction));
-                        }
-                        MGPumMoveCommand move = new(this.playerID, chain, unit);
-
-                        return move;
+                        int moveIndex = this.rng.Next(allMoves.Count);   //number is < than maxValue, therefore do not sutract 1
+                        return allMoves[moveIndex];
                     }
-                }
-                if(unit.ownerID == this.playerID && stateOracle.canAttack(unit) && unit.currentRange >= 1)
-                {
-                    Vector2Int position = unit.field.coords;
-                    Vector2Int direction = position + Vector2Int.up;
-                    MGPumField attackHere = state.getField(direction);
-
-                    if (attackHere != null && !attackHere.isEmpty() && state.getUnitForField(attackHere).ownerID != this.playerID) 
+                    else if (attackOrMove == 1 && allAttacks.Count > 0)
                     {
-                        Debug.Log("trying to attack" + attackHere);
-                        MGPumAttackChainMatcher attackMatcher = unit.getAttackMatcher();
-                        MGPumFieldChain chain = new(this.playerID, attackMatcher);
-                        chain.add(state.getField(position));
-                        if (chain.canAdd(state.getField(attackHere)))
-                        {
-                            chain.add(state.getField(attackHere));
-                        }
-                        if (chain.isValidChain())
-                        {
-                            MGPumAttackCommand attack = new(this.playerID, chain, unit);
-                            return attack;
-                        }
-                        else
-                        {
-                            Debug.Log("hilfeeeee");
-                        }
+                        int attackIndex = this.rng.Next(allAttacks.Count);   //number is < than maxValue, therefore do not sutract 1
+                        return allAttacks[attackIndex];
                     }
                 }
             }
             return new MGPumEndTurnCommand(this.playerID);
+        }
+
+
+        private List<MGPumMoveCommand> getAllMovesForUnit(MGPumUnit unit)
+        {
+            List<MGPumMoveCommand> allMoves = new();
+            if (stateOracle.canMove(unit) && unit.currentSpeed >= 1)
+            {
+                Vector2Int position = unit.field.coords;
+
+                foreach (Vector2Int direction in this.getDirections())
+                {
+                    Vector2Int movingWay = position + direction;
+                    MGPumField destination = state.getField(movingWay);
+
+                    if (destination != null && destination.isEmpty())
+                    {
+                        MGPumMoveChainMatcher chainMatcher = unit.getMoveMatcher();
+                        MGPumFieldChain chain = new(playerID, chainMatcher);
+                        chain.add(state.getField(position));
+                        if (chain.canAdd(destination))
+                        {
+                            chain.add(destination);
+                        }
+                        if (chain.isValidChain())
+                        {
+                            MGPumMoveCommand move = new(this.playerID, chain, unit);
+                            allMoves.Add(move);
+                        }
+                        
+                    }
+                }
+            }
+            return allMoves;
+        }
+
+        private List<MGPumAttackCommand> getAllAttacksForUnit(MGPumUnit unit)
+        {
+            List<MGPumAttackCommand> allAttacks = new();
+
+            if (stateOracle.canAttack(unit) && unit.currentRange >= 1)
+            {
+                Vector2Int position = unit.field.coords;
+
+                foreach (Vector2Int direction in this.getDirections())
+                {
+                    Vector2Int attackingWay = position + direction;
+                    MGPumField attackHere = state.getField(attackingWay);
+
+                    if (attackHere != null && !attackHere.isEmpty() && state.getUnitForField(attackHere).ownerID != this.playerID)
+                    {
+                        MGPumAttackChainMatcher attackMatcher = unit.getAttackMatcher();
+                        MGPumFieldChain chain = new(this.playerID, attackMatcher);
+                        chain.add(state.getField(position));
+                        if (chain.canAdd(attackHere))
+                        {
+                            chain.add(attackHere);
+                        }
+                        if (chain.isValidChain())
+                        {
+                            MGPumAttackCommand attack = new(this.playerID, chain, unit);
+                            allAttacks.Add(attack);
+                        }
+                    }
+                }
+            }
+            return allAttacks;
         }
     }
 }
