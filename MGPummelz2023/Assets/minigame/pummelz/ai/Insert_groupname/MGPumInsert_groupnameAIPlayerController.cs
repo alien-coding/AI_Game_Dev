@@ -7,6 +7,7 @@ namespace mg.pummelz.Insert_groupname
     public class MGPumInsert_groupnameAIPlayerController : MGPumStudentAIPlayerController
     {
         public const string type = "Insert_groupname";
+        private MGPumInsert_groupnameUtilFunctions util = new();
 
         public MGPumInsert_groupnameAIPlayerController(int playerID) : base(playerID)
         {
@@ -22,13 +23,52 @@ namespace mg.pummelz.Insert_groupname
 
         internal override MGPumCommand calculateCommand()
         {
+            //Kill (and flee)
+            //approach and kill
+            //damage enemy and walk away
+            //approach and damage
+            //apporach
+            //return this.randomAI();
+            return this.tacticAI();
+        }
+
+
+        private MGPumCommand tacticAI()
+        {
             foreach (MGPumUnit unit in state.getAllUnitsInZone(MGPumZoneType.Battlegrounds))
             {
                 if(unit.ownerID == this.playerID)
                 {
+                    List<MGPumMoveCommand> allMovingPossibilities = this.getAllMovesForUnit(unit);
+                    List<MGPumAttackCommand> allAttackPossibilities = this.getAllAttacksForUnit(unit);
+                    MGPumAttackCommand target = util.chooseTarget(allAttackPossibilities);
+                    if(target != null)
+                    {
+                        return target;
+                    }
+                    else
+                    {
+                        if(allMovingPossibilities != null && allMovingPossibilities.Count > 0)
+                        {
+                            return allMovingPossibilities[rng.Next(allMovingPossibilities.Count)];
+                        }
+                    }
+                }
+            }
+            return new MGPumEndTurnCommand(this.playerID);
+        }
+
+        //this is the randomAI from Task 2
+        //calulates all possible moves, pick a random one
+        private MGPumCommand randomAI()
+        {
+            foreach (MGPumUnit unit in state.getAllUnitsInZone(MGPumZoneType.Battlegrounds))
+            {
+                if (unit.ownerID == this.playerID)
+                {
                     List<MGPumCommand> allMoves = getAllPossibleMoves(unit);
                     //Debug.Log(allMoves);
-                    if(allMoves != null && allMoves.Count > 0)
+                    if (allMoves != null && allMoves.Count > 0)
                     {
                         return allMoves[rng.Next(allMoves.Count)];
                     }
@@ -37,6 +77,8 @@ namespace mg.pummelz.Insert_groupname
             return new MGPumEndTurnCommand(this.playerID);
         }
 
+        //Calculates all Moves that are possible
+        //move here beeing either shooting or walking
         private List<MGPumCommand> getAllPossibleMoves(MGPumUnit unit)
         {
             List<MGPumCommand> allPossibleMoves = new();
@@ -52,7 +94,6 @@ namespace mg.pummelz.Insert_groupname
                 return null;
             }
         }
-
 
         private List<MGPumMoveCommand> getAllMovesForUnit(MGPumUnit unit)
         {
@@ -205,7 +246,7 @@ namespace mg.pummelz.Insert_groupname
             return directions;
         }
 
-        private List<List<Vector2Int>> getAllPaths(Vector2Int position, Vector2Int destination, int maxSteps)
+        /*private List<List<Vector2Int>> getAllPaths(Vector2Int position, Vector2Int destination, int maxSteps)
         {
 
             List<Vector2Int> stepsToGoal = recursion(position, destination, maxSteps);
@@ -236,7 +277,7 @@ namespace mg.pummelz.Insert_groupname
             {
                 return null;
             }
-        }
+        }*/
 
         private List<Vector2Int> getAllOneStepPositions(Vector2Int position)
         {
