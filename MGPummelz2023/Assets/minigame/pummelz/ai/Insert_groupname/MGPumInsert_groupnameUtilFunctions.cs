@@ -73,7 +73,7 @@ namespace mg.pummelz.Insert_groupname
                 }
                 else
                 {
-                    int distanceToClosestEnemy = getDistanceToClosestEnemy(move.mover);
+                    int distanceToClosestEnemy = getDistanceToClosestEnemy(move);
                     if (bestOption == null)
                     {
                         bestOption = move;
@@ -100,7 +100,7 @@ namespace mg.pummelz.Insert_groupname
             {
                 for (int y = move.mover.field.y - range; y <= move.mover.field.y - range; y++)
                 {
-                    if(x >= 0 && y >= 0 && x <= state.fields.dimSize && y <= state.fields.dimSize)
+                    if(x >= 0 && y >= 0 && x < state.fields.dimSize && y < state.fields.dimSize)
                     {
                         MGPumField field = new MGPumField(x, y);
                         MGPumUnit foundUnit = state.getUnitForField(field);
@@ -117,23 +117,23 @@ namespace mg.pummelz.Insert_groupname
         //search for closest enemy by increasing the range 1 by one
         //aborting if one is found
         //calcing distance by taking the bigger coords delta (since cross walking is also distance one)
-        private int getDistanceToClosestEnemy(MGPumUnit unit)
+        private int getDistanceToClosestEnemy(MGPumMoveCommand move)
         {
+            Vector2Int newCoords = new (move.chain.getLast().x, move.chain.getLast().y);
             for(int range = 1; range < state.fields.dimSize; range++)
             {
-                for (int x = -range; x <= range; x++)
+                for (int x = newCoords.x - range; x <= newCoords.x + range; x++)
                 {
-                    for (int y = -range; y <= range; y++)
+                    for (int y = newCoords.y - range; y <= newCoords.y + range; y++)
                     {
-                        if(x >= 0 && y >= 0 && x <= state.fields.dimSize && y <= state.fields.dimSize)
-                        {
+                        if(x >= 0 && y >= 0 && x < state.fields.dimSize && y < state.fields.dimSize)
+                        {                            
                             MGPumUnit foundUnit = state.getUnitForField(new MGPumField(x, y));
                             if (foundUnit != null && foundUnit.ownerID != this.playerID)
                             {
-                                Vector2Int ownPosition = unit.field.coords;
                                 Vector2Int enemyPosition = foundUnit.field.coords;
-                                int xDistance = Mathf.Abs(ownPosition.x - enemyPosition.x);
-                                int yDistance = Mathf.Abs(ownPosition.y - enemyPosition.y);
+                                int xDistance = Mathf.Abs(newCoords.x - enemyPosition.x);
+                                int yDistance = Mathf.Abs(newCoords.y - enemyPosition.y);
                                 if (xDistance > yDistance)
                                 {
                                     return xDistance;
@@ -143,7 +143,7 @@ namespace mg.pummelz.Insert_groupname
                                     return yDistance;
                                 }
                             }
-                        }   
+                        }
                     }
                 }
             }
