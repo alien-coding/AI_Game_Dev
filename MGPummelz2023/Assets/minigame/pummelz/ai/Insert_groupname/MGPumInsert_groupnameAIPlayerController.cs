@@ -118,7 +118,6 @@ namespace mg.pummelz.Insert_groupname
                         List<Vector2Int> splittedSteps = splitVectorInSteps(position, vectorToDestination); //split vector to destination in single steps for chain
                         foreach (Vector2Int stepVector in splittedSteps)
                         {
-                            //Debug.Log(stepVector + " " + unit.currentSpeed);
                             MGPumField fieldOfVector = state.getField(stepVector);  //add the steps as fields to chain
                             if (chain.canAdd(fieldOfVector))
                             {
@@ -129,6 +128,31 @@ namespace mg.pummelz.Insert_groupname
                                 break;  //if one can't be added, the whole move is not possible, abort here (later checks for last one which is not set)
                             }
                         }
+                        if (!chain.isValidChain())
+                        {
+                            List<List<Vector2Int>> allPaths = getAllPaths(position, vectorToDestination, unit.currentSpeed);
+                            foreach (List<Vector2Int> possiblePath in allPaths)
+                            {
+                                chain = new(playerID, chainMatcher);
+                                foreach (Vector2Int stepVector in possiblePath)
+                                {
+                                    MGPumField fieldOfVector = state.getField(stepVector);  //add the steps as fields to chain
+                                    if (chain.canAdd(fieldOfVector))
+                                    {
+                                        chain.add(fieldOfVector);
+                                    }
+                                    else
+                                    {
+                                        break;  //if one can't be added, the whole move is not possible, abort here (later checks for last one which is not set)
+                                    }
+                                }
+                                if (chain.isValidChain())
+                                {
+                                    break;
+                                }
+                            }
+                        }
+
                         if (chain.isValidChain() && chain.getLast() == destination)     //only if chain is valid and every step could be added (aborts if one can't be added)
                         {
                             MGPumMoveCommand move = new(this.playerID, chain, unit);
@@ -172,7 +196,31 @@ namespace mg.pummelz.Insert_groupname
                                 break;  //if one can't be added, the whole move is not possible, abort here (later checks for last one which is not set)
                             }
                         }
-                        
+                        if (!chain.isValidChain())
+                        {
+                            List<List<Vector2Int>> allPaths = getAllPaths(position, vectorToTarget, unit.currentRange);
+                            foreach (List<Vector2Int> possiblePath in allPaths)
+                            {
+                                chain = new(playerID, attackMatcher);
+                                foreach (Vector2Int stepVector in possiblePath)
+                                {
+                                    MGPumField fieldOfVector = state.getField(stepVector);  //add the steps as fields to chain
+                                    if (chain.canAdd(fieldOfVector))
+                                    {
+                                        chain.add(fieldOfVector);
+                                    }
+                                    else
+                                    {
+                                        break;  //if one can't be added, the whole move is not possible, abort here (later checks for last one which is not set)
+                                    }
+                                }
+                                if(chain.isValidChain())
+                                {
+                                    break;
+                                }
+                            }
+                        }
+
                         if (chain.isValidChain() && chain.getLast() == targetField)     //only if chain is valid and every step could be added (aborts if one can't be added)
                         {
                             MGPumAttackCommand attack = new(this.playerID, chain, unit);
@@ -246,38 +294,48 @@ namespace mg.pummelz.Insert_groupname
             return directions;
         }
 
-        /*private List<List<Vector2Int>> getAllPaths(Vector2Int position, Vector2Int destination, int maxSteps)
+        private List<List<Vector2Int>> getAllPaths(Vector2Int position, Vector2Int destination, int maxSteps)
         {
 
-            List<Vector2Int> stepsToGoal = recursion(position, destination, maxSteps);
+            List<List<Vector2Int>> allPaths = recursion(position, destination, maxSteps);
+            List<List<Vector2Int>> stepsToGoal = new();
+            foreach (List<Vector2Int> possibleSteps in allPaths)
+            {
+                if(possibleSteps[possibleSteps.Count-1] == destination)
+                {
+                    stepsToGoal.Add(possibleSteps);
+                }
+            }
+            return stepsToGoal;
         }
 
-        private List<Vector2Int> recursion(Vector2Int position, Vector2Int destination, int maxSteps)
+        private List<List<Vector2Int>> recursion(Vector2Int position, Vector2Int destination, int maxSteps)
         {
-            List<List<Vector2Int>> stepsToGoal = null;
-            if (maxSteps > 0 && position != destination)
+            List<List<Vector2Int>> stepsToGoal = new();
+            if (maxSteps > 0)
             {
                 List<Vector2Int> moves = getAllOneStepPositions(position);
                 foreach (Vector2Int move in moves)
                 {
-                    List <Vector2Int> temp = recursion(move, destination, maxSteps - 1);
-                    if (temp != null)
+                    List<List<Vector2Int>> result = recursion(move, destination, maxSteps - 1);
+                    foreach (List<Vector2Int> list in result)
                     {
-                        stepsToGoal.AddRange(temp);
-                    }0000
+                        List<Vector2Int> listWithSelf = list;
+                        listWithSelf.Insert(0, position);   //adding item to beginning because it's the previous step
+                        stepsToGoal.Add(listWithSelf);
+                    }
                 }
-                return stepsToGoal;
-            }
-            else if (position == destination)
-            {
-                stepsToGoal.Add(position);
                 return stepsToGoal;
             }
             else
             {
-                return null;
+                List<Vector2Int> selfAtTheEnd = new();
+                selfAtTheEnd.Add(position);
+                List<List<Vector2Int>> toReturn = new();
+                toReturn.Add(selfAtTheEnd);
+                return toReturn;
             }
-        }*/
+        }
 
         private List<Vector2Int> getAllOneStepPositions(Vector2Int position)
         {
