@@ -6,6 +6,15 @@ namespace mg.pummelz.Insert_groupname
 {
     public class MGPumInsert_groupnameUtilFunctions : MonoBehaviour
     {
+        private MGPumGameState state;
+        private int playerID;
+
+        public MGPumInsert_groupnameUtilFunctions(MGPumGameState state, int playerID)
+        {
+            this.state = state;
+            this.playerID = playerID;
+        }
+
         //search for kill and return if found
         //if no kill possible, choose who to damage
         public MGPumAttackCommand chooseTarget(List<MGPumAttackCommand> allPosibilites)
@@ -35,6 +44,130 @@ namespace mg.pummelz.Insert_groupname
                 }
                 return bestOption;
             }
+        }
+
+        public MGPumMoveCommand chooseWalkingWay(List<MGPumMoveCommand> allPosibilites)
+        {
+            MGPumMoveCommand bestOption = null;
+            MGPumUnit mostPowerReachableUnit = null;
+            int remainingDistanceToClosestEnemy = int.MaxValue;
+            foreach (MGPumMoveCommand move in allPosibilites)
+            {
+                List<MGPumUnit> reachableUnits = getReachableEnemy(move);
+                if (reachableUnits != null && reachableUnits.Count > 0)
+                {
+                    if (bestOption == null)
+                    {
+                        bestOption = move;
+                        mostPowerReachableUnit = getUnitWithMostPower(reachableUnits);
+                    }
+                    else
+                    {
+                        MGPumUnit mostPoweredUnitOfThisMove = getUnitWithMostPower(reachableUnits);
+                        if (mostPoweredUnitOfThisMove.currentPower > mostPowerReachableUnit.currentPower)
+                        {
+                            bestOption = move;
+                            mostPowerReachableUnit = mostPoweredUnitOfThisMove;
+                        }
+                    }
+                }
+                else
+                {
+                    int distanceToClosestEnemy = getDistanceToClosestEnemy(move.mover);
+                    if (bestOption == null)
+                    {
+                        bestOption = move;
+                        remainingDistanceToClosestEnemy = distanceToClosestEnemy;
+                    }
+                    else
+                    {
+                        if(distanceToClosestEnemy < remainingDistanceToClosestEnemy)
+                        {
+                            bestOption = move;
+                            remainingDistanceToClosestEnemy = distanceToClosestEnemy;
+                        }
+                    }
+                }
+            }
+            return bestOption;
+        }
+
+        private List<MGPumUnit> getReachableEnemy(MGPumMoveCommand move)
+        {
+            List<MGPumUnit> reachableUnits = new();
+            int range = move.mover.currentRange;
+            for (int x = move.mover.field.x - range; x <= move.mover.field.x + range; x++)
+            {
+                for (int y = move.mover.field.y - range; y <= move.mover.field.y - range; y++)
+                {
+                    if(x >= 0 && y >= 0 && x <= state.fields.dimSize && y <= state.fields.dimSize)
+                    {
+                        MGPumField field = new MGPumField(x, y);
+                        MGPumUnit foundUnit = state.getUnitForField(field);
+                        if (foundUnit != null && foundUnit.ownerID != this.playerID)
+                        {
+                            reachableUnits.Add(foundUnit);
+                        }
+                    }
+                }
+            }
+            return reachableUnits;
+        }
+
+        //search for closest enemy by increasing the range 1 by one
+        //aborting if one is found
+        //calcing distance by taking the bigger coords delta (since cross walking is also distance one)
+        private int getDistanceToClosestEnemy(MGPumUnit unit)
+        {
+            for(int range = 1; range < state.fields.dimSize; range++)
+            {
+                for (int x = -range; x <= range; x++)
+                {
+                    for (int y = -range; y <= range; y++)
+                    {
+                        if(x >= 0 && y >= 0 && x <= state.fields.dimSize && y <= state.fields.dimSize)
+                        {
+                            MGPumUnit foundUnit = state.getUnitForField(new MGPumField(x, y));
+                            if (foundUnit != null && foundUnit.ownerID != this.playerID)
+                            {
+                                Vector2Int ownPosition = unit.field.coords;
+                                Vector2Int enemyPosition = foundUnit.field.coords;
+                                int xDistance = Mathf.Abs(ownPosition.x - enemyPosition.x);
+                                int yDistance = Mathf.Abs(ownPosition.y - enemyPosition.y);
+                                if (xDistance > yDistance)
+                                {
+                                    return xDistance;
+                                }
+                                else
+                                {
+                                    return yDistance;
+                                }
+                            }
+                        }   
+                    }
+                }
+            }
+            return int.MaxValue;
+        }
+
+        private MGPumUnit getUnitWithMostPower(List<MGPumUnit> units)
+        {
+            MGPumUnit mostPoweredEnemy = null;
+            foreach (MGPumUnit unit in units)
+            {
+                if(mostPoweredEnemy == null)
+                {
+                    mostPoweredEnemy = unit;
+                }
+                else
+                {
+                    if(unit.currentPower > mostPoweredEnemy.currentPower)
+                    {
+                        mostPoweredEnemy = unit;
+                    }
+                }
+            }
+            return mostPoweredEnemy;
         }
 
         private MGPumAttackCommand chooseBestKill(MGPumAttackCommand bestUntilNow, MGPumAttackCommand toCompare)

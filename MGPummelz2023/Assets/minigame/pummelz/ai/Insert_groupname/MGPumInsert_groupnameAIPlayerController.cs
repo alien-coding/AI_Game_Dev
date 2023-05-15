@@ -7,11 +7,11 @@ namespace mg.pummelz.Insert_groupname
     public class MGPumInsert_groupnameAIPlayerController : MGPumStudentAIPlayerController
     {
         public const string type = "Insert_groupname";
-        private MGPumInsert_groupnameUtilFunctions util = new();
+        private MGPumInsert_groupnameUtilFunctions util;
 
         public MGPumInsert_groupnameAIPlayerController(int playerID) : base(playerID)
         {
-            
+
         }
 
         
@@ -35,6 +35,7 @@ namespace mg.pummelz.Insert_groupname
 
         private MGPumCommand tacticAI()
         {
+            this.util = new(this.state, playerID);
             foreach (MGPumUnit unit in state.getAllUnitsInZone(MGPumZoneType.Battlegrounds))
             {
                 if(unit.ownerID == this.playerID)
@@ -50,7 +51,7 @@ namespace mg.pummelz.Insert_groupname
                     {
                         if(allMovingPossibilities != null && allMovingPossibilities.Count > 0)
                         {
-                            return allMovingPossibilities[rng.Next(allMovingPossibilities.Count)];
+                            return util.chooseWalkingWay(allMovingPossibilities);
                         }
                     }
                 }
@@ -171,7 +172,6 @@ namespace mg.pummelz.Insert_groupname
                                 break;  //if one can't be added, the whole move is not possible, abort here (later checks for last one which is not set)
                             }
                         }
-
                         
                         if (chain.isValidChain() && chain.getLast() == targetField)     //only if chain is valid and every step could be added (aborts if one can't be added)
                         {
