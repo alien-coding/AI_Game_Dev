@@ -46,28 +46,31 @@ namespace mg.pummelz.Insert_groupname
             }
         }
 
+        //choose best option where to walk
+        //trying to reach an enemy, if several options possible, reach most powerfull
+        //else try to approach the closest enemy
         public MGPumMoveCommand chooseWalkingWay(List<MGPumMoveCommand> allPosibilites)
         {
             MGPumMoveCommand bestOption = null;
-            MGPumUnit mostPowerReachableUnit = null;
+            MGPumUnit mostPowerfullReachableUnit = null;
             int remainingDistanceToClosestEnemy = int.MaxValue;
             foreach (MGPumMoveCommand move in allPosibilites)
             {
                 List<MGPumUnit> reachableUnits = getReachableEnemy(move);
                 if (reachableUnits != null && reachableUnits.Count > 0)
                 {
+                    MGPumUnit mostPowerfullReachableUnitOfThisMove = getUnitWithMostPower(reachableUnits);
                     if (bestOption == null)
                     {
                         bestOption = move;
-                        mostPowerReachableUnit = getUnitWithMostPower(reachableUnits);
+                        mostPowerfullReachableUnit = mostPowerfullReachableUnitOfThisMove;
                     }
                     else
                     {
-                        MGPumUnit mostPoweredUnitOfThisMove = getUnitWithMostPower(reachableUnits);
-                        if (mostPoweredUnitOfThisMove.currentPower > mostPowerReachableUnit.currentPower)
+                        if (mostPowerfullReachableUnit == null || mostPowerfullReachableUnitOfThisMove.currentPower > mostPowerfullReachableUnit.currentPower)
                         {
                             bestOption = move;
-                            mostPowerReachableUnit = mostPoweredUnitOfThisMove;
+                            mostPowerfullReachableUnit = mostPowerfullReachableUnitOfThisMove; ;
                         }
                     }
                 }
@@ -92,13 +95,15 @@ namespace mg.pummelz.Insert_groupname
             return bestOption;
         }
 
+        //Get all reachable enemies 
         private List<MGPumUnit> getReachableEnemy(MGPumMoveCommand move)
         {
             List<MGPumUnit> reachableUnits = new();
+            Vector2Int newCoords = new(move.chain.getLast().x, move.chain.getLast().y);
             int range = move.mover.currentRange;
-            for (int x = move.mover.field.x - range; x <= move.mover.field.x + range; x++)
+            for (int x = newCoords.x - range; x <= newCoords.x + range; x++)
             {
-                for (int y = move.mover.field.y - range; y <= move.mover.field.y - range; y++)
+                for (int y = newCoords.y - range; y <= newCoords.y - range; y++)
                 {
                     if(x >= 0 && y >= 0 && x < state.fields.dimSize && y < state.fields.dimSize)
                     {
