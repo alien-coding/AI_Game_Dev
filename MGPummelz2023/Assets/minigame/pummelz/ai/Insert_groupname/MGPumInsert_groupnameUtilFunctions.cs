@@ -57,6 +57,7 @@ namespace mg.pummelz.Insert_groupname
             foreach (MGPumMoveCommand move in allPosibilites)
             {
                 List<MGPumUnit> reachableUnits = getReachableEnemy(move);
+                //is there a unit reachable?
                 if (reachableUnits != null && reachableUnits.Count > 0)
                 {
                     MGPumUnit mostPowerfullReachableUnitOfThisMove = getUnitWithMostPower(reachableUnits);
@@ -74,6 +75,7 @@ namespace mg.pummelz.Insert_groupname
                         }
                     }
                 }
+                //walk towards the closest enemy 
                 else
                 {
                     int distanceToClosestEnemy = getDistanceToClosestEnemy(move);
