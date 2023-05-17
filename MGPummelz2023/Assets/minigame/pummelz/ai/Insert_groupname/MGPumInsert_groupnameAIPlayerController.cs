@@ -136,14 +136,17 @@ namespace mg.pummelz.Insert_groupname
                                 chain = new(playerID, chainMatcher);
                                 foreach (Vector2Int stepVector in possiblePath)
                                 {
-                                    MGPumField fieldOfVector = state.getField(stepVector);  //add the steps as fields to chain
-                                    if (chain.canAdd(fieldOfVector))
+                                    if (stepVector.x >= 0 && stepVector.y >= 0 && stepVector.x < state.fields.dimSize && stepVector.y < state.fields.dimSize)
                                     {
-                                        chain.add(fieldOfVector);
-                                    }
-                                    else
-                                    {
-                                        break;  //if one can't be added, the whole move is not possible, abort here (later checks for last one which is not set)
+                                        MGPumField fieldOfVector = state.getField(stepVector);  //add the steps as fields to chain
+                                        if (chain.canAdd(fieldOfVector))
+                                        {
+                                            chain.add(fieldOfVector);
+                                        }
+                                        else
+                                        {
+                                            break;  //if one can't be added, the whole move is not possible, abort here (later checks for last one which is not set)
+                                        }
                                     }
                                 }
                                 if (chain.isValidChain())
@@ -204,14 +207,17 @@ namespace mg.pummelz.Insert_groupname
                                 chain = new(playerID, attackMatcher);
                                 foreach (Vector2Int stepVector in possiblePath)
                                 {
-                                    MGPumField fieldOfVector = state.getField(stepVector);  //add the steps as fields to chain
-                                    if (chain.canAdd(fieldOfVector))
+                                    if(stepVector.x >= 0 && stepVector.y >= 0 && stepVector.x < state.fields.dimSize && stepVector.y < state.fields.dimSize)
                                     {
-                                        chain.add(fieldOfVector);
-                                    }
-                                    else
-                                    {
-                                        break;  //if one can't be added, the whole move is not possible, abort here (later checks for last one which is not set)
+                                        MGPumField fieldOfVector = state.getField(stepVector);  //add the steps as fields to chain
+                                        if (chain.canAdd(fieldOfVector))
+                                        {
+                                            chain.add(fieldOfVector);
+                                        }
+                                        else
+                                        {
+                                            break;  //if one can't be added, the whole move is not possible, abort here (later checks for last one which is not set)
+                                        }
                                     }
                                 }
                                 if(chain.isValidChain())
